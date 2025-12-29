@@ -1,13 +1,253 @@
-package Resource;
+package src;
 
 import java.awt.*;
+import java.util.ArrayList;
+
 import javax.swing.*;
 
-public class PacMan extends JPanel {
+public class PacMan extends JPanel implements ActionListener {
+  private final String[] tileMap = { 
+
+            "XXXXXXXXXXXXXXXXXXX", 
+
+            "X        X        X", 
+
+            "X XX XXX X XXX XXbX", 
+
+            "X                 X", 
+
+            "X XX X XXXXX X XX X", 
+
+            "X    X       X    X", 
+
+            "XXXX XXXX XXXX XXXX", 
+
+            "OOOX X       X XOOO", 
+
+            "XXXX X XXrXX X XXXX", 
+
+            "O        o        O", 
+
+            "XXXX X XXXXX X XXXX", 
+
+            "OOOX X       X XOOO", 
+
+            "XXXX X XXXXX X XXXX", 
+
+            "X        X        X", 
+
+            "X XX XXX X XXX XX X", 
+
+            "X  X     P     X  X", 
+
+            "XX X X XXXXX X X XX", 
+
+            "X    X   X   X    X", 
+
+            "X XXXXXX X XXXXXX X", 
+
+            "X         p       X", 
+
+            "XXXXXXXXXXXXXXXXXXX" 
+
+    }; 
+
+ private final List<GhostInfo> previousGhosts = new ArrayList<>(); 
+
+    private final int rowCount = tileMap.length; 
+
+    private final int columnCount = tileMap[0].length(); 
+
+    private final int tileSize = 32; 
+
+    private final int boardWidth = columnCount * tileSize; 
+
+    private final int boardHeight = rowCount * tileSize;
+
+  private final List<Block> walls = new ArrayList<>(); 
+
+    private final List<Block> foods = new ArrayList<>(); 
+
+    private final List<Ghost> ghosts = new ArrayList<>(); 
+
+    private PacmanBlock pacman; 
 
     private static final int TILE_SIZE = 32;
     private static final int SPEED = TILE_SIZE / 6;
+    private PacmanBlock pacman;
 
+    private void loadMap() { 
+
+    walls.clear(); 
+
+    foods.clear(); 
+
+    ghosts.clear(); 
+
+    pacman = null; 
+
+ 
+
+    for (int r = 0; r < rowCount; r++) { 
+
+        for (int c = 0; c < columnCount; c++) { 
+
+            char ch = tileMap[r].charAt(c); 
+
+            int x = c * tileSize; 
+
+            int y = r * tileSize; 
+
+ 
+
+            if (ch == 'X') { 
+
+                walls.add(new Block(wallImage, x, y, tileSize, tileSize)); 
+
+            } 
+
+            else if (ch == 'P') { 
+
+                pacman = new PacmanBlock(pacmanRightImage, x, y, tileSize, tileSize); 
+
+            } 
+
+            else if (ch == ' ') { 
+
+                foods.add(new Block(null, 
+
+                        x + tileSize / 2 - 2, 
+
+                        y + tileSize / 2 - 2, 
+
+                        4, 4)); 
+
+            } 
+
+           else if (ch == 'b' || ch == 'o' || ch == 'p' || ch == 'r') { 
+
+                    Image img = blueGhostImage; 
+
+                    String type = "blue"; 
+
+                    if (ch == 'o') { 
+
+                        img = orangeGhostImage; 
+
+                        type = "orange"; 
+
+                    } else if (ch == 'p') { 
+
+                        img = pinkGhostImage; 
+
+                        type = "pink"; 
+
+                    } else if (ch == 'r') { 
+
+                        img = redGhostImage; 
+
+                        type = "red"; 
+
+                    } 
+
+                    Ghost g = new Ghost(img, x, y, tileSize, tileSize, type, x, y); 
+
+                    ghosts.add(g); 
+
+ 
+
+                    previousGhosts.add(new GhostInfo(type, x, y)); 
+
+                } 
+
+        } 
+
+    } 
+
+} 
+     private void step() { 
+
+        if (pacman != null) pacman.move(); 
+
+ 
+
+        if (pacman != null) { 
+
+            if (pacman.x < -pacman.width) pacman.x = boardWidth; 
+
+            else if (pacman.x > boardWidth) pacman.x = -pacman.width; 
+
+        } 
+
+        for (Ghost g : ghosts) g.move(); 
+
+        for (Ghost g : ghosts) { 
+
+            if (g.x < 0) { 
+
+                g.x = 0; 
+
+                g.reverseDirection(); 
+
+            } 
+
+            if (g.x + g.width > boardWidth) { 
+
+                g.x = boardWidth - g.width; 
+
+                g.reverseDirection(); 
+
+            }        } 
+
+        if (ghostsScared) { 
+
+            long now = System.currentTimeMillis(); 
+
+            List<Ghost> eatenThisFrame = new ArrayList<>(); 
+
+            for (Ghost g : ghosts) { 
+
+                if (collision(pacman, g)) { 
+
+                    eatenThisFrame.add(g); 
+
+                    score += 200; 
+
+                    removedGhostStarts.add(new Point(g.startX, g.startY)); 
+
+                }            } 
+
+            if (now - scaredStartTime >= 15000) { 
+
+                ghostsScared = false; 
+
+                for (Ghost g : ghosts) g.setScared(false); 
+
+            } 
+
+        } else { 
+
+            for (Ghost g : ghosts) { 
+
+                if (collision(pacman, g)) { 
+
+                    lives--; 
+
+                    if (lives <= 0) { 
+
+                        triggerGameOver(); 
+
+                        return; 
+
+                    } else { 
+
+                        restoreAllGhostsAfterLifeLoss(); 
+
+                        resetPositions(); 
+
+                        return;                    }       }	}        } 
+
+    } 
     private class PacmanBlock {
         Image image;
         int x, y, width, height;
@@ -126,6 +366,182 @@ public class PacMan extends JPanel {
                 }
             });
         }
-}
+    }
+    private class Ghost extends Block { 
 
-private PacmanBlock pacman;
+ 
+
+    int velX = 0; 
+
+    int velY = 0; 
+
+    String type; 
+
+ 
+
+    Ghost(Image img, int x, int y, int w, int h, String type) { 
+
+        super(img, x, y, w, h); 
+
+        this.type = type; 
+
+        setRandomDirection(); 
+
+    } 
+
+ 
+
+    void setRandomDirection() { 
+
+        int r = random.nextInt(4); 
+
+        int s = tileSize / 8; 
+
+ 
+
+        if (r == 0) { velX = 0; velY = -s; } 
+
+        else if (r == 1) { velX = 0; velY = s; } 
+
+        else if (r == 2) { velX = -s; velY = 0; } 
+
+        else { velX = s; velY = 0; } 
+
+    } 
+
+ 
+
+    void reverseDirection() { 
+
+        velX = -velX; 
+
+        velY = -velY; 
+
+    } 
+
+ 
+
+    void move() { 
+
+        int gx = x; 
+
+        int gy = y; 
+
+ 
+
+        x += velX; 
+
+        y += velY; 
+
+ 
+
+        for (Block w : walls) { 
+
+            if (collision(this, w)) { 
+
+                x = gx; 
+
+                y = gy; 
+
+               reverseDirection(); 
+
+                break; 
+
+            } 
+
+        } 
+
+    } 
+
+} 
+    private static class GhostInfo { 
+
+        String type; 
+
+        int startX, startY; 
+
+        GhostInfo(String type, int startX, int startY) { 
+
+            this.type = type; 
+
+            this.startX = startX; 
+
+            this.startY = startY; 
+
+        } 
+
+    } 
+private void restoreAllGhostsAfterLifeLoss() { 
+
+        ghosts.clear(); 
+
+        for (GhostInfo info : previousGhosts) { 
+
+            Image img = blueGhostImage; 
+
+            if ("orange".equals(info.type)) img = orangeGhostImage; 
+
+            else if ("pink".equals(info.type)) img = pinkGhostImage; 
+
+            else if ("red".equals(info.type)) img = redGhostImage; 
+
+            Ghost g = new Ghost(img, info.startX, info.startY, tileSize, tileSize, info.type, info.startX, info.startY); 
+
+            g.setRandomDirection(); 
+
+            ghosts.add(g); 
+
+        } 
+
+        removedGhostStarts.clear(); 
+
+        ghostsScared = false; 
+
+    } 
+
+ 
+
+    private void restoreAllGhostsAfterLevel() { 
+
+        restoreAllGhostsAfterLifeLoss(); 
+
+    } 
+
+ 
+
+    private void resetPositions() { 
+
+        for (int r = 0; r < rowCount; r++) { 
+
+            String row = tileMap[r]; 
+
+            for (int c = 0; c < columnCount; c++) { 
+
+                if (row.charAt(c) == 'P') { 
+
+                    int sx = c * tileSize; 
+
+                    int sy = r * tileSize; 
+
+                    if (pacman != null) { 
+
+                        pacman.x = sx; 
+
+                        pacman.y = sy; 
+
+                        pacman.setDirection('R'); 
+
+                        pacman.setImage(pacmanRightImage); 
+
+                    } 
+
+                    return; 
+
+                } 
+
+            } 
+
+        } 
+
+    } 
+}
