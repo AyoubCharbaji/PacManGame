@@ -89,8 +89,10 @@ private Image cherryImage; // Load in loadImages()
 
 private PacmanBlock pacman; 
 
-    private static final int TILE_SIZE = 32;
-    private static final int SPEED = TILE_SIZE / 6;
+private static final int TILE_SIZE = 32;
+private static final int SPEED = TILE_SIZE / 6;
+private int score = 0;
+private int lives = 3;
 
 cherryImage = new ImageIcon(getClass().getResource("/Resource/cherry.png")).getImage();
 
@@ -577,6 +579,14 @@ private void restoreAllGhostsAfterLifeLoss() {
                     return; 
 
                 } 
+
+    private void triggerGameOver() {
+    gameState = GameState.GAMEOVER;
+    gameLoop.stop();
+    updateMenuVisibility();
+}
+
+
 @Override
 protected void paintComponent(Graphics gg) {
     super.paintComponent(gg);
@@ -620,7 +630,8 @@ protected void paintComponent(Graphics gg) {
     // Score & Lives
     g.setColor(Color.WHITE);
     g.setFont(new Font("Arial", Font.PLAIN, 18));
-    g.drawString("Score: " + score, tileSize / 2, tileSize / 2);
+    g.drawString("Score: " + score, tileSize/2, tileSize/2);
+    g.drawString("Lives: " + lives, boardWidth - 100, tileSize/2);
 
     String livesText = "Lives: " + lives;
     int w = g.getFontMetrics().stringWidth(livesText);
