@@ -267,10 +267,10 @@ private void step() {
         }
 
         if (foods.isEmpty()) {
-            restoreAllGhostsAfterLevel();
-            loadMap();
-            resetPositions();
-        }
+    restoreAllGhostsAfterLevel();
+    loadMap(); // Next level
+    resetPositions();
+}
     }
 
 private void spawnCherryIfNeeded() {
@@ -333,82 +333,76 @@ private void placeNewCherry() {
             return r1.intersects(r2);
         }
 
-        private void setupKeyBindings() {
-            InputMap im = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-            ActionMap am = getActionMap();
+private void setupKeyBindings() {
+        InputMap im = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap am = getActionMap();
 
-            im.put(KeyStroke.getKeyStroke("released UP"), "up");
-            am.put("up", new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (gameState == GameState.PLAYING && pacman != null) {
-                        pacman.setDirection('U');
-                        pacman.setImage(pacmanUpImage);
-                    }
+        im.put(KeyStroke.getKeyStroke("released UP"), "up");
+        am.put("up", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (gameState == GameState.PLAYING && pacman != null) {
+                    pacman.setDirection('U');
+                    pacman.setImage(pacmanUpImage);
                 }
-            });
+            }
+        });
 
-            im.put(KeyStroke.getKeyStroke("released DOWN"), "down");
-            am.put("down", new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (gameState == GameState.PLAYING && pacman != null) {
-                        pacman.setDirection('D');
-                        pacman.setImage(pacmanDownImage);
-                    }
+        im.put(KeyStroke.getKeyStroke("released DOWN"), "down");
+        am.put("down", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (gameState == GameState.PLAYING && pacman != null) {
+                    pacman.setDirection('D');
+                    pacman.setImage(pacmanDownImage);
                 }
-            });
+            }
+        });
 
-            im.put(KeyStroke.getKeyStroke("released LEFT"), "left");
-            am.put("left", new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (gameState == GameState.PLAYING && pacman != null) {
-                        pacman.setDirection('L');
-                        pacman.setImage(pacmanLeftImage);
-                    }
+        im.put(KeyStroke.getKeyStroke("released LEFT"), "left");
+        am.put("left", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (gameState == GameState.PLAYING && pacman != null) {
+                    pacman.setDirection('L');
+                    pacman.setImage(pacmanLeftImage);
                 }
-            });
+            }
+        });
 
-            im.put(KeyStroke.getKeyStroke("released RIGHT"), "right");
-            am.put("right", new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (gameState == GameState.PLAYING && pacman != null) {
-                        pacman.setDirection('R');
-                        pacman.setImage(pacmanRightImage);
-                    }
+        im.put(KeyStroke.getKeyStroke("released RIGHT"), "right");
+        am.put("right", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (gameState == GameState.PLAYING && pacman != null) {
+                    pacman.setDirection('R');
+                    pacman.setImage(pacmanRightImage);
                 }
-            });
+            }
+        });
 
-            im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), "esc");
-            am.put("esc", new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (gameState == GameState.PLAYING)
-                        pauseGame();
-                    else if (gameState == GameState.PAUSED)
-                        resumeGame();
-                    else if (gameState == GameState.MENU)
-                        System.exit(0);
-                    else if (gameState == GameState.GAMEOVER)
-                        goToMenu();
-                }
-            });
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), "esc");
+        am.put("esc", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (gameState == GameState.PLAYING) pauseGame();
+                else if (gameState == GameState.PAUSED) resumeGame();
+                else if (gameState == GameState.MENU) System.exit(0);
+                else if (gameState == GameState.GAMEOVER) goToMenu();
+            }
+        });
 
-            im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "enter");
-            am.put("enter", new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    if (gameState == GameState.MENU || gameState == GameState.GAMEOVER)
-                        startNewGame();
-                    else if (gameState == GameState.PAUSED)
-                        resumeGame();
-                }
-            });
-        }
+        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "enter");
+        am.put("enter", new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (gameState == GameState.MENU || gameState == GameState.GAMEOVER) startNewGame();
+                else if (gameState == GameState.PAUSED) resumeGame();
+            }
+        });
     }
-    private class Ghost extends Block { 
+
+private class Ghost extends Block { 
 
  
 
@@ -550,42 +544,30 @@ private void restoreAllGhostsAfterLifeLoss() {
 
  
 
-    private void resetPositions() { 
+private void resetPositions() {
+        for (int r = 0; r < rowCount; r++) {
+            String row = tileMap[r];
+            for (int c = 0; c < columnCount; c++) {
+                if (row.charAt(c) == 'P') {
+                    int sx = c * tileSize;
+                    int sy = r * tileSize;
+                    if (pacman != null) {
+                        pacman.x = sx;
+                        pacman.y = sy;
+                        pacman.setDirection('R');
+                        pacman.setImage(pacmanRightImage);
+                    }
+                    return;
+                }
+            }
+        }
+    }
 
-        for (int r = 0; r < rowCount; r++) { 
-
-            String row = tileMap[r]; 
-
-            for (int c = 0; c < columnCount; c++) { 
-
-                if (row.charAt(c) == 'P') { 
-
-                    int sx = c * tileSize; 
-
-                    int sy = r * tileSize; 
-
-                    if (pacman != null) { 
-
-                        pacman.x = sx; 
-
-                        pacman.y = sy; 
-
-                        pacman.setDirection('R'); 
-
-                        pacman.setImage(pacmanRightImage); 
-
-                    } 
-
-                    return; 
-
-                } 
-
+                    
     private void triggerGameOver() {
     gameState = GameState.GAMEOVER;
     gameLoop.stop();
     updateMenuVisibility();
-}
-
 
 @Override
 protected void paintComponent(Graphics gg) {
