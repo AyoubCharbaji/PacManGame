@@ -72,6 +72,7 @@ public class PacMan extends JPanel implements ActionListener {
     private final List<Block> foods = new ArrayList<>(); 
 
     private final List<Ghost> ghosts = new ArrayList<>(); 
+private final Timer gameLoop;
 
     private PacmanBlock pacman; 
 
@@ -168,6 +169,28 @@ public class PacMan extends JPanel implements ActionListener {
     } 
 
 } 
+@Override
+public void actionPerformed(ActionEvent e) {
+    if (gameState == GameState.PLAYING) {
+        step();
+        repaint();
+    }
+}
+private void step() {
+    if (pacman != null) pacman.move();
+
+    for (Ghost g : ghosts) g.move();
+
+    Iterator<Block> fit = foods.iterator();
+    while (fit.hasNext()) {
+        Block f = fit.next();
+        if (collision(pacman, f)) {
+            fit.remove();
+            score += 10;
+        }
+    }
+}
+
      private void step() { 
 
         if (pacman != null) pacman.move(); 
