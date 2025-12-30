@@ -1,9 +1,12 @@
 package src;
 
-import java.awt.*;
-import java.util.ArrayList;
-
 import javax.swing.*;
+import javax.swing.Timer;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import java.util.List;
+
 
 public class PacMan extends JPanel implements ActionListener {
   private final String[] tileMap = { 
@@ -538,6 +541,58 @@ private void restoreAllGhostsAfterLifeLoss() {
                     return; 
 
                 } 
+@Override
+protected void paintComponent(Graphics gg) {
+    super.paintComponent(gg);
+    Graphics2D g = (Graphics2D) gg;
+
+    // Walls
+    for (Block w : walls) {
+        if (w.image != null)
+            g.drawImage(w.image, w.x, w.y, w.width, w.height, null);
+        else {
+            g.setColor(Color.DARK_GRAY);
+            g.fillRect(w.x, w.y, w.width, w.height);
+        }
+    }
+
+    // Foods
+    g.setColor(Color.WHITE);
+    for (Block f : foods)
+        g.fillRect(f.x, f.y, f.width, f.height);
+
+    // Cherry
+    if (cherry != null && cherry.image != null) {
+                g.drawImage(cherry.image, cherry.x, cherry.y, cherry.width, cherry.height, null);
+    }
+
+    // Ghosts
+    for (Ghost gr : ghosts) {
+        if (gr.image != null)
+            g.drawImage(gr.image, gr.x, gr.y, gr.width, gr.height, null);
+        else {
+            g.setColor(Color.MAGENTA);
+            g.fillRect(gr.x, gr.y, gr.width, gr.height);
+        }
+    }
+
+    // Pacman
+    if (pacman != null && pacman.image != null) {
+        g.drawImage(pacman.image, pacman.x, pacman.y, pacman.width, pacman.height, null);
+    }
+
+    // Score & Lives
+    g.setColor(Color.WHITE);
+    g.setFont(new Font("Arial", Font.PLAIN, 18));
+    g.drawString("Score: " + score, tileSize / 2, tileSize / 2);
+
+    String livesText = "Lives: " + lives;
+    int w = g.getFontMetrics().stringWidth(livesText);
+    g.drawString(livesText, boardWidth - w - 8, tileSize / 2);
+}
+
+
+
 
             } 
 
