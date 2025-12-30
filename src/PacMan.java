@@ -55,24 +55,24 @@ public class PacMan extends JPanel implements ActionListener {
 
     }; 
 
- private final List<GhostInfo> previousGhosts = new ArrayList<>(); 
+private final List<GhostInfo> previousGhosts = new ArrayList<>(); 
 
-    private final int rowCount = tileMap.length; 
+private final int rowCount = tileMap.length; 
 
-    private final int columnCount = tileMap[0].length(); 
+private final int columnCount = tileMap[0].length(); 
 
-    private final int tileSize = 32; 
+private final int tileSize = 32; 
 
-    private final int boardWidth = columnCount * tileSize; 
+private final int boardWidth = columnCount * tileSize; 
 
-    private final int boardHeight = rowCount * tileSize;
+private final int boardHeight = rowCount * tileSize;
 
-  private final List<Block> walls = new ArrayList<>(); 
+private final List<Block> walls = new ArrayList<>(); 
+private final List<Block> foods = new ArrayList<>(); 
 
-    private final List<Block> foods = new ArrayList<>(); 
-
-    private final List<Ghost> ghosts = new ArrayList<>(); 
+private final List<Ghost> ghosts = new ArrayList<>(); 
 private final Timer gameLoop;
+            
 private enum GameState { MENU, PLAYING, PAUSED, GAMEOVER }
 private GameState gameState = GameState.MENU;
 private final JPanel menuPanel = new JPanel();
@@ -80,12 +80,20 @@ private final JButton startBtn = new JButton("Start (New Game)");
 private final JButton continueBtn = new JButton("Continue");
 private final JButton exitBtn = new JButton("Exit");
 
+private Cherry cherry = null;
+private long cherrySpawnTime = 0;
+private int cherriesEatenThisLife = 0;
+private boolean ghostsScared = false;
+private long scaredStartTime = 0;
+private Image cherryImage; // Load in loadImages()
 
-
-    private PacmanBlock pacman; 
+private PacmanBlock pacman; 
 
     private static final int TILE_SIZE = 32;
     private static final int SPEED = TILE_SIZE / 6;
+
+cherryImage = new ImageIcon(getClass().getResource("/Resource/cherry.png")).getImage();
+
     private PacmanBlock pacman;
 
     private void loadMap() { 
@@ -184,104 +192,101 @@ public void actionPerformed(ActionEvent e) {
         repaint();
     }
 }
+
 private void step() {
-    if (pacman != null) pacman.move();
+        if (pacman != null) pacman.move();
 
-    for (Ghost g : ghosts) g.move();
-
-    Iterator<Block> fit = foods.iterator();
-    while (fit.hasNext()) {
-        Block f = fit.next();
-        if (collision(pacman, f)) {
-            fit.remove();
-            score += 10;
+        if (pacman != null) {
+            if (pacman.x < -pacman.width) pacman.x = boardWidth;
+            else if (pacman.x > boardWidth) pacman.x = -pacman.width;
         }
+
+        for (Ghost g : ghosts) g.move();
+
+        for (Ghost g : ghosts) {
+            if (g.x < 0) {
+                g.x = 0;
+                g.reverseDirection();
+            }
+            if (g.x + g.width > boardWidth) {
+                g.x = boardWidth - g.width;
+                g.reverseDirection();
+            }
+        }
+
+        Iterator<Block> fit = foods.iterator();
+        while (fit.hasNext()) {
+            Block f = fit.next();
+            if (collision(pacman, f)) {
+                fit.remove();
+                score += 10;
+            }
+        }
+
+        spawnCherryIfNeeded();
+        if (cherry != null && collision(pacman, cherry)) {
+            cherry = null;
+            cherriesEatenThisLife++;
+            ghostsScared = true;
+            scaredStartTime = System.currentTimeMillis();
+            for (Ghost g : ghosts) g.setScared(true);
+        }
+
+        if (ghostsScared) {
+            long now = System.currentTimeMillis();
+            List<Ghost> eatenThisFrame = new ArrayList<>();
+            for (Ghost g : ghosts) {
+                if (collision(pacman, g)) {
+                    eatenThisFrame.add(g);
+                    score += 200;
+                    removedGhostStarts.add(new Point(g.startX, g.startY));
+                }
+            }
+            if (!eatenThisFrame.isEmpty()) ghosts.removeAll(eatenThisFrame);
+
+            if (now - scaredStartTime >= 15000) {
+                ghostsScared = false;
+                for (Ghost g : ghosts) g.setScared(false);
+            }
+        } else {
+            for (Ghost g : ghosts) {
+                if (collision(pacman, g)) {
+                    lives--;
+                    if (lives <= 0) {
+                        triggerGameOver();
+                        return;
+                    } else {
+                        restoreAllGhostsAfterLifeLoss();
+                        resetPositions();
+                        return;
+                    }
+                }
+            }
+        }
+
+        if (foods.isEmpty()) {
+            restoreAllGhostsAfterLevel();
+            loadMap();
+            resetPositions();
+        }
+    }
+
+private void spawnCherryIfNeeded() {
+    long now = System.currentTimeMillis();
+    if (cherry == null && cherriesEatenThisLife >= 2) {
+        if (cherriesEatenThisLife == 2) placeNewCherry();
+        cherrySpawnTime = now;
+    } else if (now - cherrySpawnTime > 20000) {
+        placeNewCherry();
+        cherrySpawnTime = now;
     }
 }
 
-     private void step() { 
+private void placeNewCherry() {
+    // Random safe position logic (check !wall, !pacman, !ghost collision)
+    // cherry = new Cherry(cherryImage, x, y, tileSize, tileSize);
+}
 
-        if (pacman != null) pacman.move(); 
-
- 
-
-        if (pacman != null) { 
-
-            if (pacman.x < -pacman.width) pacman.x = boardWidth; 
-
-            else if (pacman.x > boardWidth) pacman.x = -pacman.width; 
-
-        } 
-
-        for (Ghost g : ghosts) g.move(); 
-
-        for (Ghost g : ghosts) { 
-
-            if (g.x < 0) { 
-
-                g.x = 0; 
-
-                g.reverseDirection(); 
-
-            } 
-
-            if (g.x + g.width > boardWidth) { 
-
-                g.x = boardWidth - g.width; 
-
-                g.reverseDirection(); 
-
-            }        } 
-
-        if (ghostsScared) { 
-
-            long now = System.currentTimeMillis(); 
-
-            List<Ghost> eatenThisFrame = new ArrayList<>(); 
-
-            for (Ghost g : ghosts) { 
-
-                if (collision(pacman, g)) { 
-
-                    eatenThisFrame.add(g); 
-
-                    score += 200; 
-
-                    removedGhostStarts.add(new Point(g.startX, g.startY)); 
-
-                }            } 
-
-            if (now - scaredStartTime >= 15000) { 
-
-                ghostsScared = false; 
-
-                for (Ghost g : ghosts) g.setScared(false); 
-
-            } 
-
-        } else { 
-
-            for (Ghost g : ghosts) { 
-
-                if (collision(pacman, g)) { 
-
-                    lives--; 
-
-                    if (lives <= 0) { 
-
-                        triggerGameOver(); 
-
-                        return; 
-
-                    } else { 
-
-                        restoreAllGhostsAfterLifeLoss(); 
-
-                        resetPositions(); 
-
-                        return;                    }       }	}        } 
-
-    } 
     private class PacmanBlock {
         Image image;
         int x, y, width, height;
