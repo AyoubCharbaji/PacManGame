@@ -73,6 +73,14 @@ public class PacMan extends JPanel implements ActionListener {
 
     private final List<Ghost> ghosts = new ArrayList<>(); 
 private final Timer gameLoop;
+private enum GameState { MENU, PLAYING, PAUSED, GAMEOVER }
+private GameState gameState = GameState.MENU;
+private final JPanel menuPanel = new JPanel();
+private final JButton startBtn = new JButton("Start (New Game)");
+private final JButton continueBtn = new JButton("Continue");
+private final JButton exitBtn = new JButton("Exit");
+
+
 
     private PacmanBlock pacman; 
 
@@ -612,6 +620,20 @@ protected void paintComponent(Graphics gg) {
     String livesText = "Lives: " + lives;
     int w = g.getFontMetrics().stringWidth(livesText);
     g.drawString(livesText, boardWidth - w - 8, tileSize / 2);
+    // Draw PAUSED title above menu panel with space
+        if (gameState == GameState.PAUSED) {
+            g.setFont(new Font("Arial", Font.BOLD, 24));
+            String s = "PAUSED";
+            int sw = g.getFontMetrics().stringWidth(s);
+            g.drawString(s, (boardWidth - sw) / 2, (boardHeight - 250) / 2); // draw it 30 pixels above menu panel Y
+        } else if (gameState == GameState.GAMEOVER) {
+            g.setFont(new Font("Arial", Font.BOLD, 32));
+            String s = "GAME OVER";
+            int sw = g.getFontMetrics().stringWidth(s);
+            g.drawString(s, (boardWidth - sw) / 2, (boardHeight - 250) / 2);
+        }
+
+
 }
 
 
