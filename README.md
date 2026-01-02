@@ -65,8 +65,9 @@ git clone https://github.com/AyoubCharbaji/PacManGame.git
 cd PacManGame
 
 #### Compile & run
-javac *.java
-java App
+javac -cp . src/*.java
+
+java -cp . src.App
 
 
 **Or** Open in IntelliJ/VSCode → Run `App.main()`
